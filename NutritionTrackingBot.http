@@ -1,0 +1,6 @@
+@NutritionTrackingBot_HostAddress = http://localhost:5272
+
+GET {{NutritionTrackingBot_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
