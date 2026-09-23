@@ -22,11 +22,19 @@ public class CalorieTrackerController : ControllerBase
     }
 
     [HttpGet("today")]
-    public async Task<IActionResult> GetToday()
+    public async Task<IActionResult> GetToday([FromQuery] int userId)
     {
-        var summary = await _trackerService.GetDailySummaryAsync();
+        var summary = await _trackerService.GetDailySummaryAsync(userId);
 
         return Ok(summary);
+    }
+
+    [HttpGet("history")]
+    public async Task<IActionResult> GetHistory([FromQuery] int userId, [FromQuery] DateTime date)
+    {
+        var history = await _trackerService.GetHistoryAsync(userId, date);
+
+        return Ok(history);
     }
 
     [HttpPost("food")]
@@ -36,4 +44,5 @@ public class CalorieTrackerController : ControllerBase
 
         return Ok("Food added successfully.");
     }
+    
 }

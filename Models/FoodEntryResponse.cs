@@ -1,8 +1,6 @@
-using System.Text.Json.Serialization;
-
 namespace NutritionTrackingBot.Models;
 
-public class FoodEntry
+public class FoodEntryResponse
 {
     public int Id { get; set; }
     public string FoodName { get; set; } = string.Empty;
@@ -10,10 +8,5 @@ public class FoodEntry
     public double Protein { get; set; }
     public double Fat { get; set; }
     public double Carbs { get; set; }
-    public DateTime ConsumedAt { get; set; } = DateTime.UtcNow;
-
-    //User
-    [JsonIgnore]
-    public int? userId {get; set;}
-    public User? user {get; set;}
+    public DateTime ConsumedAt { get; set; }
 }

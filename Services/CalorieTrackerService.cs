@@ -22,13 +22,31 @@ public class CalorieTrackerService : ICalorieTrackerService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<DailyNutritionSummary> GetDailySummaryAsync()
+    public async Task<DailyNutritionSummary> GetDailySummaryAsync(int userId)
     {   
-        var today = DateTime.UtcNow.Date;
-        var tomorrow = today.AddDays(1);
+        //get users
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+        if(user == null)
+        {
+            throw new Exception("User not found");
+        }
+
+        //get user timezone
+        var timeZone = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
+
+        var localNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow,timeZone);
+
+        var localStart = DateTime.SpecifyKind(localNow.Date,DateTimeKind.Unspecified);
+
+        var localEnd = localStart.AddDays(1);
+
+        //convert to UTC
+        var startUtc = TimeZoneInfo.ConvertTimeToUtc(localStart, timeZone);
+        var endUtc = TimeZoneInfo.ConvertTimeToUtc(localEnd, timeZone);
 
         var foods = await _context.FoodEntries
-        .Where(f => f.ConsumedAt >= today && f.ConsumedAt < tomorrow)
+        .Where(f => f.ConsumedAt >= startUtc && f.ConsumedAt < endUtc && f.userId == userId)
         .ToListAsync();
 
         return new DailyNutritionSummary
@@ -53,4 +71,41 @@ public class CalorieTrackerService : ICalorieTrackerService
 
         await _context.SaveChangesAsync();
     }
+    public async Task<List<FoodEntryResponse>>GetHistoryAsync(int userId, DateTime date)
+    {
+        //get users
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+        if(user == null)
+        {
+            throw new Exception("User not found");
+        }
+
+        //get user timezone
+        var timeZone = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
+
+        var localDate = DateTime.SpecifyKind(date.Date, DateTimeKind.Unspecified);
+
+        var localStart = localDate;
+        var localEnd = localStart.AddDays(1);
+
+        //convert to UTC
+        var startUtc = TimeZoneInfo.ConvertTimeToUtc(localStart, timeZone);
+        var endUtc = TimeZoneInfo.ConvertTimeToUtc(localEnd, timeZone);
+
+        return await _context.FoodEntries
+        .Where(f => f.userId == userId && f.ConsumedAt >= startUtc && f.ConsumedAt < endUtc)
+        .OrderBy(f => f.ConsumedAt)
+        .Select(f => new FoodEntryResponse
+        {
+            Id = f.Id,
+            FoodName = f.FoodName,
+            Calories = f.Calories,
+            Protein = f.Protein,
+            Fat = f.Fat,
+            Carbs = f.Carbs,
+            ConsumedAt = f.ConsumedAt
+        })
+        .ToListAsync();
+        }
 }
