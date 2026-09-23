@@ -8,8 +8,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
-builder.Services.AddSingleton<
-ICalorieTrackerService,CalorieTrackerService>();
+// Local Storage
+// builder.Services.AddSingleton<ICalorieTrackerService,CalorieTrackerService>();
+
+// Database Storage
+builder.Services.AddScoped<ICalorieTrackerService, CalorieTrackerService>();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 Console.WriteLine($"Connection String: {connectionString}");

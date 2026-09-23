@@ -22,17 +22,17 @@ public class CalorieTrackerController : ControllerBase
     }
 
     [HttpGet("today")]
-    public IActionResult GetToday()
+    public async Task<IActionResult> GetToday()
     {
-        var summary = _trackerService.GetDailySummary();
+        var summary = await _trackerService.GetDailySummaryAsync();
 
         return Ok(summary);
     }
 
     [HttpPost("food")]
-    public IActionResult AddFood(FoodEntry food)
+    public async Task<IActionResult> AddFood(FoodEntry food)
     {
-        _trackerService.AddFood(food);
+        await _trackerService.AddFoodAsync(food);
 
         return Ok("Food added successfully.");
     }

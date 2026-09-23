@@ -1,29 +1,56 @@
 using NutritionTrackingBot.Models;
+using NutritionTrackingBot.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace NutritionTrackingBot.Services;
 
 public class CalorieTrackerService : ICalorieTrackerService
 {
-    private readonly List<FoodEntry> _foods = new();
+    // Local storage 
+    // private readonly List<FoodEntry> _foods = new();
 
-    public void AddFood(FoodEntry food)
+    // Database storage
+    private readonly AppDbContext _context;
+    public CalorieTrackerService(AppDbContext context)
     {
-        _foods.Add(food);
+        _context = context;
     }
 
-    public DailyNutritionSummary GetDailySummary()
+    public async Task AddFoodAsync(FoodEntry food)
     {
+        _context.FoodEntries.Add(food);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<DailyNutritionSummary> GetDailySummaryAsync()
+    {   
+        var today = DateTime.UtcNow.Date;
+        var tomorrow = today.AddDays(1);
+
+        var foods = await _context.FoodEntries
+        .Where(f => f.ConsumedAt >= today && f.ConsumedAt < tomorrow)
+        .ToListAsync();
+
         return new DailyNutritionSummary
         {
-            Calories = _foods.Sum(f => f.Calories),
-            Protein = _foods.Sum(f => f.Protein),
-            Fat = _foods.Sum(f => f.Fat),
-            Carbs = _foods.Sum(f => f.Carbs)
+            Calories = foods.Sum(f => f.Calories),
+            Protein = foods.Sum(f => f.Protein),
+            Fat = foods.Sum(f => f.Fat),
+            Carbs = foods.Sum(f => f.Carbs)
         };
     }
 
-    public void ResetDailyTracking()
+    public async Task ResetDailyTrackingAsync()
     {
-        _foods.Clear();
+       var today = DateTime.UtcNow.Date;
+        var tomorrow = today.AddDays(1);
+
+        var foods = await _context.FoodEntries
+            .Where(f => f.ConsumedAt >= today && f.ConsumedAt < tomorrow)
+            .ToListAsync();
+
+        _context.FoodEntries.RemoveRange(foods);
+
+        await _context.SaveChangesAsync();
     }
 }

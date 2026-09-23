@@ -4,7 +4,7 @@ namespace NutritionTrackingBot.Services;
 
 public interface ICalorieTrackerService
 {
-    void AddFood(FoodEntry food);
-    DailyNutritionSummary GetDailySummary();
-    void ResetDailyTracking();
+    Task AddFoodAsync(FoodEntry food);
+    Task<DailyNutritionSummary> GetDailySummaryAsync();
+    Task ResetDailyTrackingAsync();
 }
