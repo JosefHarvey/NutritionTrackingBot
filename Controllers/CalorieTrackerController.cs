@@ -26,6 +26,11 @@ public class CalorieTrackerController : ControllerBase
     {
         var summary = await _trackerService.GetDailySummaryAsync(userId);
 
+        if (summary == null)
+        {
+            return NotFound("User not found.");
+        }
+
         return Ok(summary);
     }
 
@@ -34,15 +39,62 @@ public class CalorieTrackerController : ControllerBase
     {
         var history = await _trackerService.GetHistoryAsync(userId, date);
 
+        if (history == null)
+        {
+            return NotFound("User not found.");
+        }
+        
         return Ok(history);
     }
 
-    [HttpPost("food")]
-    public async Task<IActionResult> AddFood(FoodEntry food)
+    [HttpGet("food/{id}")]
+    public async Task<IActionResult> GetFoodById(int id)
     {
-        await _trackerService.AddFoodAsync(food);
+        var food = await _trackerService.GetFoodByIdAsync(id);
 
-        return Ok("Food added successfully.");
+        if (food == null)
+        {
+            return NotFound("Food entry not found.");
+        }
+
+        return Ok(food);
+    }
+
+    [HttpPost("food")]
+    public async Task<IActionResult> AddFood(AddFoodRequest request)
+    {
+        var food = new FoodEntry
+        {
+            FoodName = request.FoodName,
+            Calories = request.Calories,
+            Protein = request.Protein,
+            Fat = request.Fat,
+            Carbs = request.Carbs
+        };
+
+        var result = await _trackerService.AddFoodAsync(food,request.UserId);
+
+        if (result == null)
+        {
+            return NotFound("User not found.");
+        }
+
+        return CreatedAtAction(nameof(GetFoodById), new { id = result.Id }, result);
+    }
+
+    [HttpPost("reset")]
+    public async Task<IActionResult> Reset([FromQuery] int userId)
+    {
+        var success = await _trackerService.ResetDailyTrackingAsync(userId);
+
+        if (!success)
+        {
+            return NotFound("User not found.");
+        }       
+        return Ok(new
+        {
+            message = "Daily tracking reset successfully."
+        });
     }
     
 }

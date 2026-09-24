@@ -13,7 +13,8 @@ public class FoodEntry
     public DateTime ConsumedAt { get; set; } = DateTime.UtcNow;
 
     //User
-    [JsonIgnore]
     public int? userId {get; set;}
+
+    [JsonIgnore]
     public User? user {get; set;}
 }

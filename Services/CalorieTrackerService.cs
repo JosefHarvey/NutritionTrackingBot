@@ -1,6 +1,7 @@
 using NutritionTrackingBot.Models;
 using NutritionTrackingBot.Data;
 using Microsoft.EntityFrameworkCore;
+using NutritionTrackingBot.Helpers;
 
 namespace NutritionTrackingBot.Services;
 
@@ -16,34 +17,44 @@ public class CalorieTrackerService : ICalorieTrackerService
         _context = context;
     }
 
-    public async Task AddFoodAsync(FoodEntry food)
+    public async Task<FoodEntryResponse?> AddFoodAsync(FoodEntry food, int userId)
     {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null)
+        {
+            return null;
+        }
+
+        food.userId = userId;
+
         _context.FoodEntries.Add(food);
+
         await _context.SaveChangesAsync();
+
+        return new FoodEntryResponse
+        {
+            Id = food.Id,
+            FoodName = food.FoodName,
+            Calories = food.Calories,
+            Protein = food.Protein,
+            Fat = food.Fat,
+            Carbs = food.Carbs,
+            ConsumedAt = food.ConsumedAt
+        };
     }
 
-    public async Task<DailyNutritionSummary> GetDailySummaryAsync(int userId)
+    public async Task<DailyNutritionSummary?> GetDailySummaryAsync(int userId)
     {   
         //get users
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
-        if(user == null)
+        if (user == null)
         {
-            throw new Exception("User not found");
+            return null;
         }
 
-        //get user timezone
-        var timeZone = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
-
-        var localNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow,timeZone);
-
-        var localStart = DateTime.SpecifyKind(localNow.Date,DateTimeKind.Unspecified);
-
-        var localEnd = localStart.AddDays(1);
-
-        //convert to UTC
-        var startUtc = TimeZoneInfo.ConvertTimeToUtc(localStart, timeZone);
-        var endUtc = TimeZoneInfo.ConvertTimeToUtc(localEnd, timeZone);
+        var (startUtc, endUtc) = TimezoneHelper.GetUtcRangeForToday(user.TimeZoneId);
 
         var foods = await _context.FoodEntries
         .Where(f => f.ConsumedAt >= startUtc && f.ConsumedAt < endUtc && f.userId == userId)
@@ -58,40 +69,44 @@ public class CalorieTrackerService : ICalorieTrackerService
         };
     }
 
-    public async Task ResetDailyTrackingAsync()
+    public async Task<bool> ResetDailyTrackingAsync(int userId)
     {
-       var today = DateTime.UtcNow.Date;
-        var tomorrow = today.AddDays(1);
+        //Get User
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
-        var foods = await _context.FoodEntries
-            .Where(f => f.ConsumedAt >= today && f.ConsumedAt < tomorrow)
-            .ToListAsync();
+        if (user == null)
+        {
+            return false;
+        }
+
+        // Get today's UTC range based on user's timezone
+        var (startUtc, endUtc) =
+        TimezoneHelper.GetUtcRangeForToday(user.TimeZoneId);
+
+        var foods = await _context.FoodEntries.Where(f =>
+            f.userId == userId &&
+            f.ConsumedAt >= startUtc &&
+            f.ConsumedAt < endUtc)
+        .ToListAsync();
 
         _context.FoodEntries.RemoveRange(foods);
 
         await _context.SaveChangesAsync();
+
+        return true;
     }
-    public async Task<List<FoodEntryResponse>>GetHistoryAsync(int userId, DateTime date)
+    public async Task<List<FoodEntryResponse>?> GetHistoryAsync(int userId, DateTime date)
     {
         //get users
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
-        if(user == null)
+        if (user == null)
         {
-            throw new Exception("User not found");
+            return null;
         }
 
-        //get user timezone
-        var timeZone = TimeZoneInfo.FindSystemTimeZoneById(user.TimeZoneId);
-
-        var localDate = DateTime.SpecifyKind(date.Date, DateTimeKind.Unspecified);
-
-        var localStart = localDate;
-        var localEnd = localStart.AddDays(1);
-
-        //convert to UTC
-        var startUtc = TimeZoneInfo.ConvertTimeToUtc(localStart, timeZone);
-        var endUtc = TimeZoneInfo.ConvertTimeToUtc(localEnd, timeZone);
+        //get UTC range for the specified local date based on the user's timezone
+       var(startUtc,endUtc) = TimezoneHelper.GetUtcRangeForLocalDate(user.TimeZoneId,date);
 
         return await _context.FoodEntries
         .Where(f => f.userId == userId && f.ConsumedAt >= startUtc && f.ConsumedAt < endUtc)
@@ -107,5 +122,20 @@ public class CalorieTrackerService : ICalorieTrackerService
             ConsumedAt = f.ConsumedAt
         })
         .ToListAsync();
-        }
+    }
+    public async Task<FoodEntryResponse?> GetFoodByIdAsync(int id)
+    {
+        return await _context.FoodEntries.Where(f => f.Id == id)
+        .Select(f => new FoodEntryResponse
+        {
+            Id = f.Id,
+            FoodName = f.FoodName,
+            Calories = f.Calories,
+            Protein = f.Protein,
+            Fat = f.Fat,
+            Carbs = f.Carbs,
+            ConsumedAt = f.ConsumedAt
+        })
+        .FirstOrDefaultAsync();
+    }
 }
