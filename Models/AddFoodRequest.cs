@@ -4,17 +4,14 @@ namespace NutritionTrackingBot.Models;
 
 public class AddFoodRequest
 {
-    [Required]
-    public string FoodName {get;set;} = string.Empty;
-    
-    [Range(0,double.MaxValue)]
-    public double Calories { get; set; }
-    [Range(0,double.MaxValue)]
-    public double Protein { get; set; }
-    [Range(0,double.MaxValue)]
-    public double Fat { get; set; }
-    [Range(0,double.MaxValue)]
-    public double Carbs { get; set; }
-
+    [Range(1, int.MaxValue)]
     public int UserId { get; set; }
+
+    [Range(1, int.MaxValue)]
+    public int FoodCatalogId { get; set; }
+
+    [Range(0.01, double.MaxValue)]
+    public double Quantity { get; set; }
+
+    public FoodUnit Unit { get; set; }
 }

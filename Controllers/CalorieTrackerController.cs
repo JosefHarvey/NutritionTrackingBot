@@ -63,23 +63,29 @@ public class CalorieTrackerController : ControllerBase
     [HttpPost("food")]
     public async Task<IActionResult> AddFood(AddFoodRequest request)
     {
-        var food = new FoodEntry
-        {
-            FoodName = request.FoodName,
-            Calories = request.Calories,
-            Protein = request.Protein,
-            Fat = request.Fat,
-            Carbs = request.Carbs
-        };
+        var result = await _trackerService.AddFoodAsync(request);
 
-        var result = await _trackerService.AddFoodAsync(food,request.UserId);
-
-        if (result == null)
+        switch (result.Status)
         {
-            return NotFound("User not found.");
+            case AddFoodStatus.UserNotFound:
+                return NotFound("User not found.");
+
+            case AddFoodStatus.FoodCatalogNotFound:
+                return NotFound("Food catalog not found.");
+
+            case AddFoodStatus.InvalidUnit:
+                return BadRequest(
+                    "The selected unit does not match the food catalog serving unit.");
+
+            case AddFoodStatus.Success:
+                return CreatedAtAction(
+                    nameof(GetFoodById),
+                    new { id = result.Food!.Id },
+                    result.Food);
+
+            default:
+                return BadRequest("Failed to add food.");
         }
-
-        return CreatedAtAction(nameof(GetFoodById), new { id = result.Id }, result);
     }
 
     [HttpPost("reset")]

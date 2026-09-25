@@ -13,6 +13,7 @@ builder.Services.AddControllers();
 
 // Database Storage
 builder.Services.AddScoped<ICalorieTrackerService, CalorieTrackerService>();
+builder.Services.AddScoped<IFoodCatalogService, FoodCatalogService>();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 Console.WriteLine($"Connection String: {connectionString}");

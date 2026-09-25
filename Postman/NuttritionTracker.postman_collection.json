@@ -40,7 +40,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"foodName\": \"Test Food User 1\",\r\n    \"calories\": 300,\r\n    \"protein\": 15,\r\n    \"fat\": 10,\r\n    \"carbs\": 30,\r\n    \"userId\": 1\r\n}",
+          "raw": "{\r\n    \"userId\": 1,\r\n    \"foodCatalogId\": 1,\r\n    \"quantity\": 250,\r\n    \"unit\": 0\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -69,7 +69,7 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:5272/api/calorie-tracker/history?userId=1&date=2026-09-24",
+          "raw": "http://localhost:5272/api/calorie-tracker/history?userId=99&date=2026-09-21",
           "protocol": "http",
           "host": [
             "localhost"
@@ -83,11 +83,11 @@
           "query": [
             {
               "key": "userId",
-              "value": "1"
+              "value": "99"
             },
             {
               "key": "date",
-              "value": "2026-09-24"
+              "value": "2026-09-21"
             }
           ]
         }
@@ -167,6 +167,56 @@
             "calorie-tracker",
             "food",
             "8"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GetFoodCatalogById",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5272/api/food-catalog/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5272",
+          "path": [
+            "api",
+            "food-catalog",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "New Request",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"foodName\": \"Ayam Bakar\",\r\n    \"servingSize\": 1,\r\n    \"servingUnit\": 2,\r\n    \"calories\": 320,\r\n    \"protein\": 25,\r\n    \"fat\": 18,\r\n    \"carbs\": 8,\r\n    \"source\": \"Manual\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5272/api/food-catalog",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5272",
+          "path": [
+            "api",
+            "food-catalog"
           ]
         }
       },

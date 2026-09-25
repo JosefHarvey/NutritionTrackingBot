@@ -17,30 +17,102 @@ public class CalorieTrackerService : ICalorieTrackerService
         _context = context;
     }
 
-    public async Task<FoodEntryResponse?> AddFoodAsync(FoodEntry food, int userId)
+    public async Task<AddFoodResult> AddFoodAsync(AddFoodRequest request)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == request.UserId);
 
         if (user == null)
         {
-            return null;
+            return new AddFoodResult
+            {
+                Status = AddFoodStatus.UserNotFound
+            };
         }
 
-        food.userId = userId;
+        var foodCatalog = await _context.FoodCatalogs.FirstOrDefaultAsync(f => f.Id == request.FoodCatalogId);
 
-        _context.FoodEntries.Add(food);
+        if (foodCatalog == null)
+        {
+            return new AddFoodResult
+            {
+                Status = AddFoodStatus.FoodCatalogNotFound
+            };
+        }
+
+        var userFoodCatalog = await _context.UserFoodCatalogs.FirstOrDefaultAsync(x => x.UserId == request.UserId && x.FoodCatalogId == request.FoodCatalogId);
+
+        double calories;
+        double protein;
+        double fat;
+        double carbs;
+
+        if(userFoodCatalog != null)
+        {
+            // Use the user's custom values
+            calories = userFoodCatalog.Calories;
+            protein = userFoodCatalog.Protein;
+            fat = userFoodCatalog.Fat;
+            carbs = userFoodCatalog.Carbs;
+        }
+        else
+        {
+            // Use the default values from the food catalog
+            calories = foodCatalog.Calories;
+            protein = foodCatalog.Protein;
+            fat = foodCatalog.Fat;
+            carbs = foodCatalog.Carbs;
+        }
+
+        //check if the unit matches the food catalog's serving unit
+        if(request.Unit != foodCatalog.ServingUnit)
+        {
+           return new AddFoodResult
+            {
+                Status = AddFoodStatus.InvalidUnit
+            };
+        }
+
+        // Calculate the multiplier based on the requested quantity and the serving size from the food catalog
+        var multiplier = request.Quantity / foodCatalog.ServingSize;
+
+        calories *= multiplier;
+        protein *= multiplier;
+        fat *= multiplier;
+        carbs *= multiplier;
+
+        var foodEntry = new FoodEntry
+        {
+            userId = request.UserId,
+            FoodCatalogId = request.FoodCatalogId,
+
+            FoodName = foodCatalog.FoodName,
+
+            Quantity = request.Quantity,
+            Unit = request.Unit,
+
+            Calories = calories,
+            Protein = protein,
+            Fat = fat,
+            Carbs = carbs
+        };
+         _context.FoodEntries.Add(foodEntry);
 
         await _context.SaveChangesAsync();
 
-        return new FoodEntryResponse
+        return new AddFoodResult
         {
-            Id = food.Id,
-            FoodName = food.FoodName,
-            Calories = food.Calories,
-            Protein = food.Protein,
-            Fat = food.Fat,
-            Carbs = food.Carbs,
-            ConsumedAt = food.ConsumedAt
+            Status = AddFoodStatus.Success,
+            
+            Food = new FoodEntryResponse
+            {
+            Id = foodEntry.Id,
+            FoodName = foodEntry.FoodName,
+            Calories = foodEntry.Calories,
+            Protein = foodEntry.Protein,
+            Fat = foodEntry.Fat,
+            Carbs = foodEntry.Carbs,
+            ConsumedAt = foodEntry.ConsumedAt
+            }
         };
     }
 

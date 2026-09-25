@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using NutritionTrackingBot.Data;
@@ -11,9 +12,11 @@ using NutritionTrackingBot.Data;
 namespace NutritionTrackingBot.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260925031141_AddUserFoodCatlog")]
+    partial class AddUserFoodCatlog
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -81,9 +84,6 @@ namespace NutritionTrackingBot.Migrations
                     b.Property<double>("Fat")
                         .HasColumnType("double precision");
 
-                    b.Property<int>("FoodCatalogId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("FoodName")
                         .IsRequired()
                         .HasColumnType("text");
@@ -91,18 +91,10 @@ namespace NutritionTrackingBot.Migrations
                     b.Property<double>("Protein")
                         .HasColumnType("double precision");
 
-                    b.Property<double>("Quantity")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("Unit")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("userId")
+                    b.Property<int?>("userId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("FoodCatalogId");
 
                     b.HasIndex("userId");
 
@@ -175,19 +167,9 @@ namespace NutritionTrackingBot.Migrations
 
             modelBuilder.Entity("NutritionTrackingBot.Models.FoodEntry", b =>
                 {
-                    b.HasOne("NutritionTrackingBot.Models.FoodCatalog", "FoodCatalog")
-                        .WithMany()
-                        .HasForeignKey("FoodCatalogId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("NutritionTrackingBot.Models.User", "user")
                         .WithMany("FoodEntries")
-                        .HasForeignKey("userId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("FoodCatalog");
+                        .HasForeignKey("userId");
 
                     b.Navigation("user");
                 });
@@ -203,7 +185,7 @@ namespace NutritionTrackingBot.Migrations
                     b.HasOne("NutritionTrackingBot.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("FoodCatalog");

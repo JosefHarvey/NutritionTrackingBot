@@ -4,7 +4,7 @@ namespace NutritionTrackingBot.Services;
 
 public interface ICalorieTrackerService
 {
-    Task<FoodEntryResponse?>AddFoodAsync(FoodEntry food, int userId);
+    Task<AddFoodResult>AddFoodAsync(AddFoodRequest request);
     Task<DailyNutritionSummary?> GetDailySummaryAsync(int userId);
     Task<bool> ResetDailyTrackingAsync(int userId);
     Task<List<FoodEntryResponse>?>GetHistoryAsync(int userId,DateTime date);
